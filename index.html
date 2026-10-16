@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Tented️ — Private Couple Chat</title>
+  <meta name="description" content="An exclusive, end-to-end private sanctuary for two. Real-time messaging, photos, saved memories, and automatic expiration.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⛺</text></svg>">
+  
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons (Browser Script) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Application Stylesheet -->
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+  <!-- Background Ambient Glow & Floating Hearts Canvas -->
+  <div class="ambient-glow glow-top-left" aria-hidden="true"></div>
+  <div class="ambient-glow glow-bottom-right" aria-hidden="true"></div>
+  <div class="floating-hearts-container" id="floatingHearts" aria-hidden="true"></div>
+
+  <!-- ========================================================================= -->
+  <!-- 1. AUTH / LOGIN VIEW -->
+  <!-- ========================================================================= -->
+  <main class="auth-wrapper" id="authView">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="brand-badge">
+          <span class="tent-icon">⛺</span>
+          <span class="heart-pulse">💖</span>
+        </div>
+        <h1 class="brand-title">Tented</h1>
+        <p class="brand-tagline">Our Private Sanctuary</p>
+        <div class="exclusive-badge">
+          <i data-lucide="shield-check" class="icon-sm"></i>
+          <span>Exclusively for Us Two</span>
+        </div>
+      </div>
+
+      <!-- Auth Error Notification -->
+      <div class="alert-box alert-error" id="authAlert" style="display: none;" role="alert">
+        <i data-lucide="alert-circle" class="icon-sm"></i>
+        <span id="authAlertMsg">Invalid credentials</span>
+      </div>
+
+      <!-- Login Form -->
+      <form class="auth-form" id="loginForm" novalidate>
+        <div class="form-group">
+          <label for="loginEmail">Email Address</label>
+          <div class="input-with-icon">
+            <i data-lucide="mail" class="input-icon"></i>
+            <input type="email" id="loginEmail" placeholder="your-email@tented.love" required autocomplete="username">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="loginPassword">Secret Key / Password</label>
+          <div class="input-with-icon">
+            <i data-lucide="lock" class="input-icon"></i>
+            <input type="password" id="loginPassword" placeholder="••••••••••••" required autocomplete="current-password">
+            <button type="button" class="btn-icon password-toggle" id="togglePasswordBtn" aria-label="Toggle password visibility">
+              <i data-lucide="eye" id="passwordEyeIcon" class="icon-sm"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" id="loginSubmitBtn">
+          <span class="btn-text">Enter Sanctuary</span>
+          <i data-lucide="sparkles" class="icon-sm"></i>
+        </button>
+      </form>
+
+      <!-- Supabase Setup Assistant Button -->
+      <div class="auth-footer">
+        <button type="button" class="btn-link" id="openConfigModalBtn">
+          <i data-lucide="settings" class="icon-xs"></i>
+          <span>Configure Supabase Connection</span>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- 2. MAIN APP VIEW (PRIVATE COUPLE SANCTUARY) -->
+  <!-- ========================================================================= -->
+  <div class="app-layout" id="appView" style="display: none;">
+    
+    <!-- Top Navigation Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="partner-avatar-wrapper">
+          <div class="partner-avatar" id="partnerAvatar">👸</div>
+          <span class="status-indicator online" id="partnerOnlineDot" title="Partner Online"></span>
+        </div>
+        <div class="partner-meta">
+          <div class="partner-name-row">
+            <h2 class="partner-name" id="partnerDisplayName">My Love</h2>
+            <span class="role-pill" id="partnerRoleBadge">Partner</span>
+          </div>
+          <span class="connection-status" id="partnerStatusText">Connected • Realtime Active</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Message Retention Selector Pill -->
+        <button class="header-btn pill-btn" id="retentionDropdownBtn" title="Automatic Message Expiration Policy">
+          <i data-lucide="clock" class="icon-sm text-pink"></i>
+          <span id="currentRetentionText">24 Hours</span>
+          <i data-lucide="chevron-down" class="icon-xs"></i>
+        </button>
+
+        <!-- Saved Memories Button -->
+        <button class="header-btn icon-btn" id="openSavedDrawerBtn" title="Saved Memories">
+          <i data-lucide="bookmark" class="icon-md"></i>
+          <span class="badge" id="savedCountBadge" style="display: none;">0</span>
+        </button>
+
+        <!-- Sanctuary Settings Button -->
+        <button class="header-btn icon-btn" id="openSettingsModalBtn" title="Sanctuary Settings & Logout">
+          <i data-lucide="settings" class="icon-md"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Expiration Retention Dropdown Menu -->
+    <div class="dropdown-menu" id="retentionMenu" style="display: none;">
+      <div class="dropdown-header">
+        <i data-lucide="hourglass" class="icon-xs text-pink"></i>
+        <span>Auto-Expiration Policy</span>
+      </div>
+      <p class="dropdown-description">Unsaved messages automatically vanish from our database after this time.</p>
+      <div class="dropdown-options">
+        <button class="dropdown-item active" data-retention="24" id="retentionOption24">
+          <div class="dropdown-item-info">
+            <span class="item-title">24 Hours</span>
+            <span class="item-subtitle">Fresh & fleeting couple moments (Default)</span>
+          </div>
+          <i data-lucide="check" class="icon-sm item-check"></i>
+        </button>
+        <button class="dropdown-item" data-retention="72" id="retentionOption72">
+          <div class="dropdown-item-info">
+            <span class="item-title">72 Hours (3 Days)</span>
+            <span class="item-subtitle">Extended retention for weekend trips</span>
+          </div>
+          <i data-lucide="check" class="icon-sm item-check" style="display: none;"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Realtime Connection Alert Banner -->
+    <div class="connection-banner" id="connectionAlert" style="display: none;">
+      <i data-lucide="wifi-off" class="icon-xs"></i>
+      <span>Reconnecting to realtime sanctuary...</span>
+    </div>
+
+    <!-- Chat Message Stream -->
+    <main class="chat-container" id="chatContainer">
+      <!-- Loading Spinner -->
+      <div class="chat-loading" id="chatLoading">
+        <div class="romantic-spinner"></div>
+        <span>Opening our sanctuary...</span>
+      </div>
+
+      <!-- Load Older Messages Trigger -->
+      <div class="load-older-wrapper" id="loadOlderWrapper" style="display: none;">
+        <button class="btn-link" id="loadOlderBtn">
+          <i data-lucide="arrow-up" class="icon-xs"></i>
+          <span>Load older memories</span>
+        </button>
+      </div>
+
+      <!-- Empty State -->
+      <div class="chat-empty" id="chatEmptyState" style="display: none;">
+        <div class="empty-icon-box">
+          <span class="empty-emoji">💌</span>
+        </div>
+        <h3>No active messages</h3>
+        <p>Your sanctuary is clean and peaceful.<br>Send a sweet note or photo to your love.</p>
+      </div>
+
+      <!-- Message Feed -->
+      <div class="messages-feed" id="messagesFeed">
+        <!-- Rendered dynamically by script.js -->
+      </div>
+    </main>
+
+    <!-- Photo Upload Preview Bar (Appears when an image is selected) -->
+    <div class="upload-preview-bar" id="uploadPreviewBar" style="display: none;">
+      <div class="preview-thumbnail-box">
+        <img id="previewImgElement" src="" alt="Photo preview">
+        <button type="button" class="preview-close-btn" id="cancelUploadBtn" aria-label="Cancel image upload">
+          <i data-lucide="x" class="icon-xs"></i>
+        </button>
+      </div>
+      <div class="preview-details">
+        <span class="preview-filename" id="previewFileName">photo.jpg</span>
+        <span class="preview-filesize" id="previewFileSize">2.4 MB</span>
+        <div class="upload-progress-track" id="uploadProgressBarTrack" style="display: none;">
+          <div class="upload-progress-fill" id="uploadProgressFill"></div>
+        </div>
+      </div>
+      <div class="preview-status" id="uploadStatusText">Ready to send</div>
+    </div>
+
+    <!-- Message Composer Bar -->
+    <footer class="chat-composer">
+      <form class="composer-form" id="composerForm">
+        <!-- Hidden Photo File Input -->
+        <input type="file" id="photoFileInput" accept="image/jpeg,image/png,image/webp" style="display: none;" aria-label="Upload photo">
+
+        <!-- Attach Photo Button -->
+        <button type="button" class="composer-btn attach-btn" id="attachPhotoBtn" title="Attach private photo (JPG, PNG, WebP ≤ 5MB)">
+          <i data-lucide="image" class="icon-md"></i>
+        </button>
+
+        <!-- Message Textarea -->
+        <div class="composer-input-wrapper">
+          <textarea 
+            id="messageTextInput" 
+            class="composer-textarea" 
+            placeholder="Type a loving message..." 
+            rows="1"
+            maxlength="2000"
+            aria-label="Message text"
+          ></textarea>
+        </div>
+
+        <!-- Send Button -->
+        <button type="submit" class="composer-btn send-btn" id="sendBtn" title="Send message" disabled>
+          <i data-lucide="send" class="icon-md"></i>
+        </button>
+      </form>
+    </footer>
+
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 3. SAVED MESSAGES DRAWER -->
+  <!-- ========================================================================= -->
+  <aside class="drawer-overlay" id="savedDrawerOverlay" style="display: none;">
+    <div class="drawer-panel" id="savedDrawer">
+      <div class="drawer-header">
+        <div class="drawer-title-group">
+          <i data-lucide="bookmark" class="icon-md text-pink"></i>
+          <div>
+            <h3>Saved Memories</h3>
+            <span class="drawer-subtitle">Protected from automatic deletion</span>
+          </div>
+        </div>
+        <button class="btn-icon" id="closeSavedDrawerBtn" aria-label="Close saved memories">
+          <i data-lucide="x" class="icon-md"></i>
+        </button>
+      </div>
+
+      <!-- Filter Tabs -->
+      <div class="saved-filter-tabs">
+        <button class="filter-tab active" data-filter="all">All</button>
+        <button class="filter-tab" data-filter="photos">Photos</button>
+        <button class="filter-tab" data-filter="text">Text Notes</button>
+      </div>
+
+      <!-- Saved Messages List -->
+      <div class="saved-messages-list" id="savedMessagesList">
+        <!-- Rendered dynamically by script.js -->
+      </div>
+    </div>
+  </aside>
+
+  <!-- ========================================================================= -->
+  <!-- 4. FULLSCREEN PHOTO LIGHTBOX -->
+  <!-- ========================================================================= -->
+  <div class="lightbox-modal" id="photoLightbox" style="display: none;" role="dialog" aria-modal="true">
+    <div class="lightbox-backdrop" id="lightboxBackdrop"></div>
+    <div class="lightbox-container">
+      <div class="lightbox-header">
+        <span class="lightbox-title" id="lightboxCaption">Private Photo</span>
+        <div class="lightbox-actions">
+          <button class="btn-icon lightbox-btn" id="lightboxSaveBtn" title="Save / Bookmark Photo">
+            <i data-lucide="heart" class="icon-md"></i>
+          </button>
+          <a class="btn-icon lightbox-btn" id="lightboxDownloadBtn" download="tented-memory.jpg" target="_blank" rel="noopener" title="Download">
+            <i data-lucide="download" class="icon-md"></i>
+          </a>
+          <button class="btn-icon lightbox-btn" id="closeLightboxBtn" title="Close">
+            <i data-lucide="x" class="icon-md"></i>
+          </button>
+        </div>
+      </div>
+      <div class="lightbox-image-box">
+        <img id="lightboxImage" src="" alt="Expanded couple photo">
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 5. SANCTUARY SETTINGS MODAL -->
+  <!-- ========================================================================= -->
+  <div class="modal-backdrop" id="settingsModal" style="display: none;" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-row">
+          <span class="tent-icon-sm">⛺</span>
+          <h3>Sanctuary Settings</h3>
+        </div>
+        <button class="btn-icon" id="closeSettingsModalBtn" aria-label="Close settings">
+          <i data-lucide="x" class="icon-sm"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Profile Customization -->
+        <section class="settings-section">
+          <h4>Your Presence</h4>
+          <div class="form-group">
+            <label for="settingsDisplayName">Your Pet Name / Nickname</label>
+            <input type="text" id="settingsDisplayName" maxlength="30" placeholder="My Love">
+          </div>
+          <div class="form-group">
+            <label>Your Avatar Emoji</label>
+            <div class="emoji-selector" id="emojiSelector">
+              <button type="button" class="emoji-btn" data-emoji="🤴">🤴</button>
+              <button type="button" class="emoji-btn" data-emoji="👸">👸</button>
+              <button type="button" class="emoji-btn" data-emoji="💖">💖</button>
+              <button type="button" class="emoji-btn" data-emoji="🧸">🧸</button>
+              <button type="button" class="emoji-btn" data-emoji="✨">✨</button>
+              <button type="button" class="emoji-btn" data-emoji="🌹">🌹</button>
+            </div>
+          </div>
+          <button type="button" class="btn btn-secondary btn-sm" id="saveProfileBtn">Update Profile</button>
+        </section>
+
+        <!-- Security & Database Status -->
+        <section class="settings-section">
+          <h4>Security Architecture</h4>
+          <div class="security-item">
+            <i data-lucide="shield-check" class="icon-sm text-green"></i>
+            <div>
+              <strong>Row Level Security</strong>
+              <p>Strictly restricted to 2 allowlisted UUIDs.</p>
+            </div>
+          </div>
+          <div class="security-item">
+            <i data-lucide="lock" class="icon-sm text-pink"></i>
+            <div>
+              <strong>Private Photo Vault</strong>
+              <p>Short-lived 60m signed URLs. Never public.</p>
+            </div>
+          </div>
+          <div class="security-item">
+            <i data-lucide="trash-2" class="icon-sm text-purple"></i>
+            <div>
+              <strong>Server-Side Auto-Purge</strong>
+              <p>Unsaved messages and storage files automatically wiped.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Account Info -->
+        <section class="settings-section">
+          <h4>Account Details</h4>
+          <p class="account-email" id="currentUserEmail">Signed in as: ...</p>
+          <p class="account-role" id="currentUserRole">Role: ...</p>
+        </section>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger btn-block" id="logoutBtn">
+          <i data-lucide="log-out" class="icon-sm"></i>
+          <span>Leave Sanctuary (Log Out)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 6. SUPABASE CREDENTIALS CONFIG MODAL -->
+  <!-- ========================================================================= -->
+  <div class="modal-backdrop" id="configModal" style="display: none;" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-row">
+          <i data-lucide="database" class="icon-sm text-pink"></i>
+          <h3>Supabase Connection</h3>
+        </div>
+        <button class="btn-icon" id="closeConfigModalBtn" aria-label="Close configuration">
+          <i data-lucide="x" class="icon-sm"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <p class="modal-desc">
+          Tented️ connects directly to your private Supabase project. Enter your project URL and <strong>Anon (Publishable) Key</strong> below.
+          These credentials are stored only in your local browser session and never transmitted to any third party.
+        </p>
+
+        <form id="configForm">
+          <div class="form-group">
+            <label for="cfgSupabaseUrl">Supabase Project URL</label>
+            <input type="url" id="cfgSupabaseUrl" placeholder="https://your-project.supabase.co" required>
+          </div>
+
+          <div class="form-group">
+            <label for="cfgSupabaseKey">Supabase Anon / Publishable Key</label>
+            <input type="password" id="cfgSupabaseKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..." required>
+          </div>
+
+          <div class="modal-actions">
+            <button type="submit" class="btn btn-primary btn-block">Save Connection Settings</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 7. CONFIRMATION MODAL (For deleting messages) -->
+  <!-- ========================================================================= -->
+  <div class="modal-backdrop" id="confirmModal" style="display: none;" role="dialog" aria-modal="true">
+    <div class="modal-card modal-card-sm">
+      <div class="modal-header">
+        <div class="modal-title-row">
+          <i data-lucide="alert-triangle" class="icon-sm text-pink"></i>
+          <h3 id="confirmModalTitle">Delete Message?</h3>
+        </div>
+      </div>
+      <div class="modal-body">
+        <p id="confirmModalMessage">Are you sure you want to delete this message? If it has a photo, it will also be permanently wiped from the storage vault.</p>
+      </div>
+      <div class="modal-footer modal-footer-row">
+        <button type="button" class="btn btn-secondary" id="confirmCancelBtn">Keep It</button>
+        <button type="button" class="btn btn-danger" id="confirmApproveBtn">Delete Permanently</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Logic (ES Module) -->
+  <script type="module" src="./script.js"></script>
+</body>
+</html>

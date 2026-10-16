@@ -1,0 +1,17 @@
+{
+  "name": "tented-couple-chat",
+  "version": "1.0.0",
+  "description": "Tented️ — Private, End-to-End Managed Couple Chat Web App",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  },
+  "keywords": ["couple", "private-chat", "supabase", "vanilla-js", "romantic-dark"],
+  "author": "",
+  "license": "MIT"
+}
